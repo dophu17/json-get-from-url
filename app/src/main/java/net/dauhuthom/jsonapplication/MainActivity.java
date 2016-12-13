@@ -30,11 +30,11 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-//    ArrayList<Product> list;
-//    ProductAdapter adapter;
-    ArrayList<String> list;
+    ArrayList<Product> list;
+    ProductAdapter adapter;
 
     ListView lvProduct;
+    TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,82 +42,40 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         addControls();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                new DocJSON().execute("http://khoapham.vn/KhoaPhamTraining/laptrinhios/jSON/demo3.json");
-            }
-        });
-
+        new DocJSON().execute("http://dauhuthom.net/webservice/server.php?getProduct&format=json");
     }
 
     private void addControls() {
         lvProduct = (ListView) findViewById(R.id.lvProduct);
-//        list = new ArrayList<>();
-//        adapter = new ProductAdapter(this, list);
-//        lvProduct.setAdapter(adapter);
+        textView = (TextView) findViewById(R.id.textView);
+        list = new ArrayList<>();
+        adapter = new ProductAdapter(this, list);
+        lvProduct.setAdapter(adapter);
     }
 
     class DocJSON extends AsyncTask<String, Integer, String> {
 
         @Override
         protected String doInBackground(String... strings) {
-            return docNoiDung_Tu_URL(strings[0]);
+            return new ReaderJSON().readFromURL(strings[0]);
         }
 
         @Override
         protected void onPostExecute(String s) {
             try {
-                list = new ArrayList<String>();
-
                 JSONObject root = new JSONObject(s);
-                JSONArray jsonArray = root.getJSONArray("danhsach");
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject product = jsonArray.getJSONObject(i);
-//                    int id = product.getInt("id");
-                    String name = product.getString("khoahoc");
-//                    Double price = product.getDouble("price");
-                    list.add(name);
+                JSONArray products = root.getJSONArray("products");
+                for (int i = 0; i < products.length(); i++) {
+                    JSONObject product = products.getJSONObject(i);
+                    int id = product.getInt("id");
+                    String name = product.getString("name");
+                    Double price = product.getDouble("price");
+                    list.add(new Product(id, name, price));
                 }
-
-                ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, list);
-                lvProduct.setAdapter(adapter);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-//            Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT).show();
+            adapter.notifyDataSetChanged();
         }
     }
-
-    private static String docNoiDung_Tu_URL(String theUrl)
-    {
-        StringBuilder content = new StringBuilder();
-
-        try
-        {
-            // create a url object
-            URL url = new URL(theUrl);
-
-            // create a urlconnection object
-            URLConnection urlConnection = url.openConnection();
-
-            // wrap the urlconnection in a bufferedreader
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-
-            String line;
-
-            // read from the urlconnection via the bufferedreader
-            while ((line = bufferedReader.readLine()) != null)
-            {
-                content.append(line + "\n");
-            }
-            bufferedReader.close();
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
-        return content.toString();
-    }
-
 }
